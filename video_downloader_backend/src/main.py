@@ -31,7 +31,7 @@ app.config['MAX_CONTENT_LENGTH'] = int(os.getenv('MAX_CONTENT_LENGTH', 107374182
 CORS(app, resources={r"/api/*": {"origins": "*"}})
 
 # Initialize SocketIO
-socketio = SocketIO(app, cors_allowed_origins="*", async_mode='eventlet')
+socketio = SocketIO(app, cors_allowed_origins="*", async_mode='threading')
 
 # Initialize services
 upload_folder = os.getenv('UPLOAD_FOLDER', './uploads')
@@ -142,8 +142,11 @@ if __name__ == '__main__':
     queue_service.start()
     
     # Start background task for queue updates
-    import eventlet
-    eventlet.spawn(background_queue_updates)
+    import threading
+    def background_updates():
+        background_queue_updates()
+    
+    threading.Thread(target=background_updates, daemon=True).start()
     
     # Run the application
     port = int(os.getenv('PORT', 5000))
