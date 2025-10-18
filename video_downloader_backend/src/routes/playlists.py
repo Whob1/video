@@ -31,7 +31,10 @@ def get_playlist_info():
         info = video_service.extract_playlist_info(playlist_url)
         return jsonify(info), 200
     except Exception as e:
-        return jsonify({'error': str(e)}), 500
+        # Log the error internally but don't expose stack trace
+        import logging
+        logging.error(f"Error extracting playlist info for URL {playlist_url}: {str(e)}")
+        return jsonify({'error': 'Failed to extract playlist information'}), 500
 
 @playlists_bp.route('/download', methods=['POST'])
 def download_playlist():
@@ -137,4 +140,7 @@ def download_playlist():
         }), 201
         
     except Exception as e:
-        return jsonify({'error': str(e)}), 500
+        # Log the error internally but don't expose stack trace
+        import logging
+        logging.error(f"Error downloading playlist: {str(e)}")
+        return jsonify({'error': 'Failed to process playlist'}), 500

@@ -37,7 +37,10 @@ def extract_info():
         info = video_service.extract_info(url)
         return jsonify(info), 200
     except Exception as e:
-        return jsonify({'error': str(e)}), 500
+        # Log the error internally but don't expose stack trace
+        import logging
+        logging.error(f"Error extracting info for URL {url}: {str(e)}")
+        return jsonify({'error': 'Failed to extract video information'}), 500
 
 @downloads_bp.route('/single', methods=['POST'])
 def download_single():

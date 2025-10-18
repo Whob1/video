@@ -36,9 +36,12 @@ def get_drive_status():
         else:
             return jsonify({'authenticated': False}), 200
     except Exception as e:
+        # Log the error internally but don't expose stack trace
+        import logging
+        logging.error(f"Error in get_drive_status: {str(e)}")
         return jsonify({
             'authenticated': False,
-            'error': str(e)
+            'error': 'Failed to check authentication status'
         }), 200
 
 @auth_bp.route('/google-drive/auth-url', methods=['GET'])
@@ -54,7 +57,10 @@ def get_auth_url():
             'state': state
         }), 200
     except Exception as e:
-        return jsonify({'error': str(e)}), 500
+        # Log the error internally but don't expose stack trace
+        import logging
+        logging.error(f"Error generating auth URL: {str(e)}")
+        return jsonify({'error': 'Failed to generate authentication URL'}), 500
 
 @auth_bp.route('/google-drive/callback', methods=['GET'])
 def google_drive_callback():
@@ -63,7 +69,8 @@ def google_drive_callback():
     error = request.args.get('error')
     
     if error:
-        return f"<html><body><h1>Authentication failed</h1><p>{error}</p></body></html>", 400
+        # Don't expose the actual error to prevent XSS
+        return "<html><body><h1>Authentication failed</h1><p>An error occurred during authentication. Please try again.</p></body></html>", 400
     
     if not code:
         return "<html><body><h1>Authentication failed</h1><p>No authorization code received</p></body></html>", 400
@@ -73,7 +80,10 @@ def google_drive_callback():
         # In a real application, store these tokens securely in a database
         return "<html><body><h1>Authentication successful!</h1><p>You can close this window and return to the application.</p></body></html>", 200
     except Exception as e:
-        return f"<html><body><h1>Authentication failed</h1><p>{str(e)}</p></body></html>", 500
+        # Log the error internally but don't expose stack trace to user
+        import logging
+        logging.error(f"Google Drive authentication error: {str(e)}")
+        return "<html><body><h1>Authentication failed</h1><p>An error occurred during authentication. Please try again.</p></body></html>", 500
 
 @auth_bp.route('/google-drive/set-credentials', methods=['POST'])
 def set_credentials():
@@ -93,4 +103,7 @@ def set_credentials():
             'message': 'Credentials set successfully'
         }), 200
     except Exception as e:
-        return jsonify({'error': str(e)}), 500
+        # Log the error internally but don't expose stack trace
+        import logging
+        logging.error(f"Error setting credentials: {str(e)}")
+        return jsonify({'error': 'Failed to set credentials'}), 500
